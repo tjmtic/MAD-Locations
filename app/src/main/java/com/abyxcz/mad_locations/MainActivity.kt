@@ -1,5 +1,6 @@
 package com.abyxcz.mad_locations
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,6 +26,15 @@ class MainActivity : ComponentActivity() {
                     Greeting("Android")
                 }
             }
+        }
+
+        initLoc()
+    }
+
+    private fun initLoc() {
+        Intent(applicationContext, LocationService::class.java).apply {
+            action = LocationService.ACTION_START
+            startService(this)
         }
     }
 }
