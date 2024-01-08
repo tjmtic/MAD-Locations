@@ -18,19 +18,19 @@ import net.sqlcipher.database.SupportFactory
     exportSchema = false
 )
 @TypeConverters(Converters::class, ListTypeConverter::class)
-abstract class ItemDB : RoomDatabase() {
+abstract class LocationDB : RoomDatabase() {
     abstract fun LocationDao(): LocationDao
 
     companion object {
         @Volatile
-        private var INSTANCE: ItemDB? = null
-        fun getInstance(context: Context, password: String): ItemDB {
+        private var INSTANCE: LocationDB? = null
+        fun getInstance(context: Context, password: String): LocationDB {
             val path = context.getDatabasePath("locations").absolutePath
             return INSTANCE ?: synchronized(this) {
                 val supportFactory = SupportFactory(SQLiteDatabase.getBytes(password.toCharArray()))
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    ItemDB::class.java,
+                    LocationDB::class.java,
                     path,
                 )
                     .openHelperFactory(supportFactory)
