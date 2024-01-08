@@ -5,6 +5,9 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import androidx.room.Room
+import com.abyxcz.data.db.LocationDB
+
 
 class MainApplication : Application() {
 
@@ -19,6 +22,11 @@ class MainApplication : Application() {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
+    }
+
+
+    fun getDB() : LocationDB {
+        return LocationDB.getInstance(this, "")
     }
 
 }
