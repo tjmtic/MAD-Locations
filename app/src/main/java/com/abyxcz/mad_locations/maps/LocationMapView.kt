@@ -19,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.abyxcz.data.entity.LocationEntity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.LocationSource
 import com.google.android.gms.maps.model.CameraPosition
@@ -36,7 +37,7 @@ private const val TAG = "TAG-LOCATIONMAPVIEW"
 private const val zoom = 16f
 
 @Composable
-fun LocationMapView(loc : Flow<Location>, locs : Flow<List<Location>>) {
+fun LocationMapView(loc : Flow<Location>, locs : Flow<List<LocationEntity>>) {
 
     val singapore = LatLng(1.3588227, 103.8742114)
     val defaultCameraPosition = CameraPosition.fromLatLngZoom(singapore, 11f)
@@ -55,7 +56,7 @@ fun LocationMapView(loc : Flow<Location>, locs : Flow<List<Location>>) {
 
     // Collect location updates
     val locationState = loc.collectAsState(initial = newLocation())
-    val locationsState = locs.collectAsState(initial = listOf(newLocation()))
+    val locationsState = locs.collectAsState(initial = listOf())
 
     // Update blue dot and camera when the location changes
     LaunchedEffect(locationState.value) {
