@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.application")
+    id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
 }
@@ -9,11 +9,8 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.abyxcz.data"
         minSdk = 31
         targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,6 +32,7 @@ android {
         jvmTarget = "1.8"
     }
 }
+
 
 dependencies {
 
