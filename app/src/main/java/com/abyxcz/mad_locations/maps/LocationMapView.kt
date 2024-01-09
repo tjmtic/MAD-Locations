@@ -1,5 +1,6 @@
 package com.abyxcz.mad_locations.maps
 
+import android.content.Intent
 import android.location.Location
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -22,7 +23,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.abyxcz.data.entity.LocationEntity
+import com.abyxcz.mad_locations.LocationService
+import com.abyxcz.mad_locations.LocationViewModel
+import com.abyxcz.mad_locations.MainActivity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.LocationSource
 import com.google.android.gms.maps.model.CameraPosition
@@ -40,12 +46,20 @@ private const val TAG = "TAG-LOCATIONMAPVIEW"
 private const val zoom = 16f
 
 @Composable
-fun LocationMapView(loc : Flow<Location>, locs : Flow<List<LocationEntity>>, saveLocationAction: (Location?) -> Unit) {
+fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
 
     val singapore = LatLng(1.3588227, 103.8742114)
     val defaultCameraPosition = CameraPosition.fromLatLngZoom(singapore, 11f)
 
     var isMapLoaded by remember { mutableStateOf(false) }
+
+    val c = LocalContext.current as MainActivity
+
+    LaunchedEffect(true) {
+        c.initLoc()
+    }
+
+    val state by viewModel.state.collectAsState()
 
     // To control and observe the map camera
     val cameraPositionState = rememberCameraPositionState {
@@ -58,16 +72,16 @@ fun LocationMapView(loc : Flow<Location>, locs : Flow<List<LocationEntity>>, sav
     val mapProperties by remember { mutableStateOf(MapProperties(isMyLocationEnabled = true)) }
 
     // Collect location updates
-    val locationState = loc.collectAsState(initial = newLocation())
-    val locationsState = locs.collectAsState(initial = listOf())
+    //val locationState = loc.collectAsState(initial = newLocation())
+    //val locationsState = locs.collectAsState(initial = listOf())
 
     // Update blue dot and camera when the location changes
-    LaunchedEffect(locationState.value) {
+    LaunchedEffect(state) {
         Log.d(TAG, "Updating blue dot on map...")
-        locationSource.onLocationChanged(locationState.value)
+        locationSource.onLocationChanged(state.loc)
 
         Log.d(TAG, "Updating camera position...")
-        val cameraPosition = CameraPosition.fromLatLngZoom(LatLng(locationState.value.latitude, locationState.value.longitude), zoom)
+        val cameraPosition = CameraPosition.fromLatLngZoom(LatLng(state.loc.latitude, state.loc.longitude), zoom)
         //cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition), 1_000)
     }
 
@@ -91,7 +105,7 @@ fun LocationMapView(loc : Flow<Location>, locs : Flow<List<LocationEntity>>, sav
             locationSource = locationSource,
             properties = mapProperties
         ){
-            locationsState.value.forEach {
+            state.locs.forEach {
                 Marker(
                 state = rememberMarkerState(position = LatLng(it.latitude, it.longitude)),
                 title = "Marker at ${it.provider}",
@@ -116,7 +130,7 @@ fun LocationMapView(loc : Flow<Location>, locs : Flow<List<LocationEntity>>, sav
     }
 
     Row(modifier = Modifier.wrapContentSize()) {
-        Button(onClick = { saveLocationAction(locationSource.curLoc) }, content = {
+        Button(onClick = { viewModel.saveNewLocation(state.loc) }, content = {
             Text("Save This Location!")
         })
     }
