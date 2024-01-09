@@ -72,4 +72,9 @@ dependencies {
 
     //Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+
+    //Google Maps Compose
+    implementation("com.google.maps.android:maps-compose:4.3.0")
+    implementation("com.google.maps.android:maps-compose-widgets:4.3.0")
+    implementation("com.google.maps.android:maps-compose-utils:4.3.0")
 }
