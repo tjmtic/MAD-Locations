@@ -64,6 +64,10 @@ android {
 
 }
 
+kotlin {
+    jvmToolchain(8)
+}
+
 dependencies {
 
     implementation(project(":data"))
