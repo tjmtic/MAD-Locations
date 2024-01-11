@@ -25,15 +25,18 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.forEach
 
 
 private const val TAG = "TAG-LOCATIONMAPVIEW"
 private const val zoom = 16f
 
 @Composable
-fun LocationMapView(locs : Flow<Location>) {
+fun LocationMapView(loc : Flow<Location>, locs : Flow<List<Location>>) {
 
     val singapore = LatLng(1.3588227, 103.8742114)
     val defaultCameraPosition = CameraPosition.fromLatLngZoom(singapore, 11f)
@@ -51,7 +54,8 @@ fun LocationMapView(locs : Flow<Location>) {
     val mapProperties by remember { mutableStateOf(MapProperties(isMyLocationEnabled = true)) }
 
     // Collect location updates
-    val locationState = locs.collectAsState(initial = newLocation())
+    val locationState = loc.collectAsState(initial = newLocation())
+    val locationsState = locs.collectAsState(initial = listOf(newLocation()))
 
     // Update blue dot and camera when the location changes
     LaunchedEffect(locationState.value) {
@@ -60,7 +64,7 @@ fun LocationMapView(locs : Flow<Location>) {
 
         Log.d(TAG, "Updating camera position...")
         val cameraPosition = CameraPosition.fromLatLngZoom(LatLng(locationState.value.latitude, locationState.value.longitude), zoom)
-        cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition), 1_000)
+        //cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition), 1_000)
     }
 
     // Detect when the map starts moving and print the reason
@@ -82,7 +86,14 @@ fun LocationMapView(locs : Flow<Location>) {
             onMyLocationButtonClick = {  Log.d(TAG,"Overriding the onMyLocationButtonClick with this Log"); true },
             locationSource = locationSource,
             properties = mapProperties
-        )
+        ){
+            locationsState.value.forEach {
+                Marker(
+                state = rememberMarkerState(position = LatLng(it.latitude, it.longitude)),
+                title = "Marker at ${it.provider}",
+            ) }
+        }
+
         if (!isMapLoaded) {
             AnimatedVisibility(
                 modifier = Modifier
