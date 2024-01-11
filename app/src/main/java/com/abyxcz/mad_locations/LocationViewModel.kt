@@ -8,24 +8,32 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import com.abyxcz.data.dataSource.LocationDataSource
+import com.abyxcz.data.dataSource.Result
 import com.abyxcz.data.db.LocationDao
 import com.abyxcz.data.entity.LocationEntity
 import com.google.android.gms.location.FusedLocationProviderClient
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class LocationViewModel(
-    private val locDao: LocationDao,
+@HiltViewModel
+class LocationViewModel @Inject constructor(
+    private val locDataSource: LocationDataSource,
     locationClient: DefaultLocationClient,
-    interval: Long): ViewModel() {
+    ): ViewModel() {
 
     companion object {
         private const val TAG = "TAG-LocationViewModel"
+        private const val interval: Long = 5L
     }
 
     private var loc: Flow<Location> = locationClient.getLocationUpdates(interval).stateIn(
@@ -34,14 +42,27 @@ class LocationViewModel(
         initialValue = newLocation(),
         )
 
-    private var locs: Flow<List<LocationEntity>> = locDao.observeLocations().stateIn(
+    private var locs: Flow<List<LocationEntity>> = locDataSource.observeLocations().map{
+        when(it) {
+            is Result.Success -> {it.data}
+            else -> {
+                emptyList<LocationEntity>()
+            }
+        }
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = emptyList(),
         )
 
-    private val _state: MutableStateFlow<LocationViewModelState> = MutableStateFlow(LocationViewModelState(loc, locs))
-    val state: StateFlow<LocationViewModelState> = _state
+    val state: StateFlow<LocationViewModelState> = combine(loc, locs){loc, locs ->
+        LocationViewModelState(loc, locs)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = LocationViewModelState(),
+    )
+    //val state: StateFlow<LocationViewModelState> = _state
 
 
     init {
@@ -57,11 +78,11 @@ class LocationViewModel(
     }
 
     fun saveCurrentLocation(){
-
+        /* TODO */
     }
 
     fun saveLocation(location: Location){
-
+        /* TODO */
     }
 
     fun saveNewLocation(location: Location?){
@@ -76,7 +97,7 @@ class LocationViewModel(
                     longitude = location.longitude,
                     locationId = "",
                 )
-                locDao.insertLocation(locationEntity)
+                locDataSource.saveLocation(locationEntity)
             }
         }
     }
@@ -91,6 +112,6 @@ class LocationViewModel(
     }
 }
 data class LocationViewModelState(
-    var loc: Flow<Location> = flowOf(),
-    var locs: Flow<List<LocationEntity>> = flowOf(),
+    var loc: Location = Location("MyLocationProvider"),
+    var locs: List<LocationEntity> = emptyList(),
 )
