@@ -14,9 +14,9 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 object DataSourceModule {
     @Provides
-    fun provideDatabase(app: Application): LocationDB =
-        Room.databaseBuilder(app, LocationDB::class.java, "location_db").fallbackToDestructiveMigration()
-            .build()
+    fun provideDatabase(app: Application): LocationDB = LocationDB.getInstance(app, "")
+        //Room.databaseBuilder(app, LocationDB::class.java, "location_db").fallbackToDestructiveMigration()
+         //   .build()
 
     @Provides
     fun provideLocationDao(locationDB: LocationDB) : LocationDao = locationDB.LocationDao()

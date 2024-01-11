@@ -27,7 +27,7 @@ fun Permission(
 
     if (permissionsState.allPermissionsGranted) {
 
-        content
+        content()
     }
 
     else {
@@ -43,7 +43,7 @@ fun Permission(
                 !perm.status.isGranted -> {
                     // Permission is not granted.
                     // Might want to show a dialog or a message to the user.
-                    permissionNotAvailableContent
+                    permissionNotAvailableContent()
                 }
             }
         }
