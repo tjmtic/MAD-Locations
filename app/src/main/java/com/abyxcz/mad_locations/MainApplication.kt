@@ -6,8 +6,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import androidx.room.Room
-import com.abyxcz.data.db.LocationDB
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp

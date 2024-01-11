@@ -32,16 +32,12 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
-
                     Permission(permissions = listOf(android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION),
                         rationale = "Necessary to View the Map with your Location!",
                         permissionNotAvailableContent = {Greeting("MISSING LOCATION PERMISSIONS")},
                         content = {
                             LocationMapView()
                         })
-
-                    LocationMapView()
 
                 }
             }
