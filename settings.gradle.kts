@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "MAD_Locations"
 include(":app")
- 
+include(":data")
