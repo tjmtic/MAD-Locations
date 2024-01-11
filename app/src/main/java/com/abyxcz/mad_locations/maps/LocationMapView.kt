@@ -7,10 +7,13 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,7 +40,7 @@ private const val TAG = "TAG-LOCATIONMAPVIEW"
 private const val zoom = 16f
 
 @Composable
-fun LocationMapView(loc : Flow<Location>, locs : Flow<List<LocationEntity>>) {
+fun LocationMapView(loc : Flow<Location>, locs : Flow<List<LocationEntity>>, saveLocationAction: (Location?) -> Unit) {
 
     val singapore = LatLng(1.3588227, 103.8742114)
     val defaultCameraPosition = CameraPosition.fromLatLngZoom(singapore, 11f)
@@ -111,6 +114,12 @@ fun LocationMapView(loc : Flow<Location>, locs : Flow<List<LocationEntity>>) {
             }
         }
     }
+
+    Row(modifier = Modifier.wrapContentSize()) {
+        Button(onClick = { saveLocationAction(locationSource.curLoc) }, content = {
+            Text("Save This Location!")
+        })
+    }
 }
 
 /**
@@ -120,6 +129,7 @@ fun LocationMapView(loc : Flow<Location>, locs : Flow<List<LocationEntity>>) {
 private class MyLocationSource : LocationSource {
 
     private var listener: LocationSource.OnLocationChangedListener? = null
+    var curLoc: Location? = null
 
     override fun activate(listener: LocationSource.OnLocationChangedListener) {
         this.listener = listener
@@ -131,6 +141,7 @@ private class MyLocationSource : LocationSource {
 
     fun onLocationChanged(location: Location) {
         listener?.onLocationChanged(location)
+        curLoc = location
     }
 }
 
