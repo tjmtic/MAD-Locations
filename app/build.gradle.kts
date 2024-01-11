@@ -94,6 +94,9 @@ dependencies {
     implementation("com.google.maps.android:maps-compose:4.3.0")
     implementation("com.google.maps.android:maps-compose-widgets:4.3.0")
     implementation("com.google.maps.android:maps-compose-utils:4.3.0")
+
+    //ROOM DB
+    implementation("androidx.room:room-runtime:2.6.1")
 }
 
 
