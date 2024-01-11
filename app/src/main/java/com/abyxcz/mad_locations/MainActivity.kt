@@ -17,8 +17,9 @@ import com.abyxcz.mad_locations.maps.LocationMapView
 import com.abyxcz.mad_locations.ui.theme.MAD_LocationsTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.gms.location.FusedLocationProviderClient
+import dagger.hilt.android.AndroidEntryPoint
 
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     companion object {
         private const val TAG = "TAG-MainActivity"
@@ -29,9 +30,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
-        val viewModel = LocationViewModel((application as MainApplication).getDB().LocationDao(),
+       /* val viewModel = LocationViewModel((application as MainApplication).getDB().LocationDao(),
                                             DefaultLocationClient(this, FusedLocationProviderClient(this)),
-                                            5L)
+                                            10L)*/
 
         setContent {
             MAD_LocationsTheme {
@@ -41,7 +42,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 
-                    val state by viewModel.state.collectAsState()
+                    //val state by viewModel.state.collectAsState()
 
                     Greeting("Android")
 
@@ -49,23 +50,22 @@ class MainActivity : ComponentActivity() {
                         rationale = "Necessary to View the Map with your Location!",
                         permissionNotAvailableContent = {Greeting("MISSING LOCATION PERMISSIONS")},
                         content = {
-                            LocationMapView(state.loc, state.locs){ location -> viewModel.saveNewLocation(location) }
+                            LocationMapView()//state.loc, state.locs){ location -> viewModel.saveNewLocation(location) }
                         })
 
-                    LocationMapView(loc = state.loc, locs = state.locs) { location -> viewModel.saveNewLocation(location) }
+                    LocationMapView()//loc = state.loc, locs = state.locs) { location -> viewModel.saveNewLocation(location) }
 
                 }
             }
         }
 
-        initLoc()
+       // initLoc()
     }
 
-    private fun initLoc() {
-        Intent(applicationContext, LocationService::class.java).apply {
-            action = LocationService.ACTION_START
-            startService(this)
-        }
+    fun initLoc() {
+
+        (application as MainApplication).initLoc()
+
     }
 }
 
