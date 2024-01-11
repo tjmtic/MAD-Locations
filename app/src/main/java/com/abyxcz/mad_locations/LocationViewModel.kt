@@ -62,8 +62,6 @@ class LocationViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = LocationViewModelState(),
     )
-    //val state: StateFlow<LocationViewModelState> = _state
-
 
     init {
         viewModelScope.launch{

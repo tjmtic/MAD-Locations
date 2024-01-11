@@ -35,9 +35,4 @@ class MainApplication : Application() {
         }
     }
 
-
-    fun getDB() : LocationDB {
-        return LocationDB.getInstance(this, "")
-    }
-
 }

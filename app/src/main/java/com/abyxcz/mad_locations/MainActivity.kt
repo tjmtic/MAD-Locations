@@ -1,6 +1,5 @@
 package com.abyxcz.mad_locations
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,14 +8,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.abyxcz.mad_locations.maps.LocationMapView
 import com.abyxcz.mad_locations.ui.theme.MAD_LocationsTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.android.gms.location.FusedLocationProviderClient
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -29,11 +25,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
-       /* val viewModel = LocationViewModel((application as MainApplication).getDB().LocationDao(),
-                                            DefaultLocationClient(this, FusedLocationProviderClient(this)),
-                                            10L)*/
-
         setContent {
             MAD_LocationsTheme {
                 // A surface container using the 'background' color from the theme
@@ -41,31 +32,24 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-
-                    //val state by viewModel.state.collectAsState()
-
                     Greeting("Android")
 
                     Permission(permissions = listOf(android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION),
                         rationale = "Necessary to View the Map with your Location!",
                         permissionNotAvailableContent = {Greeting("MISSING LOCATION PERMISSIONS")},
                         content = {
-                            LocationMapView()//state.loc, state.locs){ location -> viewModel.saveNewLocation(location) }
+                            LocationMapView()
                         })
 
-                    LocationMapView()//loc = state.loc, locs = state.locs) { location -> viewModel.saveNewLocation(location) }
+                    LocationMapView()
 
                 }
             }
         }
-
-       // initLoc()
     }
 
     fun initLoc() {
-
         (application as MainApplication).initLoc()
-
     }
 }
 

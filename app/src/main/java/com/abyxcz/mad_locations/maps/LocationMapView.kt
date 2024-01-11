@@ -71,10 +71,6 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
     // To show blue dot on map
     val mapProperties by remember { mutableStateOf(MapProperties(isMyLocationEnabled = true)) }
 
-    // Collect location updates
-    //val locationState = loc.collectAsState(initial = newLocation())
-    //val locationsState = locs.collectAsState(initial = listOf())
-
     // Update blue dot and camera when the location changes
     LaunchedEffect(state) {
         Log.d(TAG, "Updating blue dot on map...")
