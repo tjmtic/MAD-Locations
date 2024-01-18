@@ -61,7 +61,7 @@ import kotlinx.coroutines.launch
     documentation = "https://developer.android.com/training/location/geofencing",
 )*/
 @Composable
-fun GeofencingScreen() {
+fun GeofenceScreen() {
     val permissions = listOf(
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION,
