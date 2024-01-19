@@ -28,19 +28,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.room.util.convertByteToUUID
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.abyxcz.mad_locations.Permission
-import com.example.platform.base.PermissionBox
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.android.catalog.framework.annotations.Sample
 import java.util.concurrent.TimeUnit
 
 
@@ -82,7 +82,7 @@ private fun BackgroundLocationControls() {
 
     // Observe the worker state to show enable/disable UI
     val workerState by workManager.getWorkInfosForUniqueWorkFlow(BgLocationWorker.workName)
-        .collectAsState()
+        .collectAsState(mutableListOf())
 
     val controlsState = remember(workerState) {
         // Find if there is any enqueued or running worker and provide UI state
