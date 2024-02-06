@@ -83,25 +83,33 @@ class LocationViewModel @Inject constructor(
         /* TODO */
     }
 
-    fun saveNewLocation(location: Location?){
+    fun saveNewLocation(location: Location?, title: String){
 
         location?.let {
             Log.d(TAG, "SAVEING NEW LOCAITON: ${location}")
             viewModelScope.launch {
                 val locationEntity = LocationEntity(
-                    provider = "Saved Location",
-                    id = "",
+                    provider = "Manual",
+                    id = "", //TODO convert to UUID implementations
                     latitude = location.latitude,
                     longitude = location.longitude,
-                    locationId = "",
+                    locationId = null,
+                    title = title,
+                    geolocationId = null,
+                    description = null,
+                    image = null
                 )
                 locDataSource.saveLocation(locationEntity)
             }
         }
     }
 
+    fun saveNewLocation(location: Location?){
+        saveNewLocation(location, "")
+    }
+
     private fun newLocation(): Location {
-        val location = Location("MyLocationProvider")
+        val location = Location("NewLocationProvider")
         location.apply {
             //latitude = singapore.latitude + Random.nextFloat()
             //longitude = singapore.longitude + Random.nextFloat()
@@ -110,6 +118,6 @@ class LocationViewModel @Inject constructor(
     }
 }
 data class LocationViewModelState(
-    var loc: Location = Location("MyLocationProvider"),
+    var loc: Location = Location("NewLocationProvider"),
     var locs: List<LocationEntity> = emptyList(),
 )
