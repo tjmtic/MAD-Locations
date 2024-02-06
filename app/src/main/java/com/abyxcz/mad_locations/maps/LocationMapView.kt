@@ -155,25 +155,25 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
                 TextField(
                     value = textState,
                     onValueChange = { newText -> textState = newText },
-                    label = { Text("Enter text") }
+                    label = { Text("Enter Title") }
                 )
+
+                //DESCRIPTION
+
+                //Attach Closest GEOLOCATION
 
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Button(onClick = { /* Handle form submission */ }) {
+                    Button(onClick = { viewModel.saveNewLocation(state.loc, textState) }) {
                         Text("Submit")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(onClick = {
                         coroutineScope.launch {
-                            // if (bottomSheetState.bottomSheetState.isVisible) {
-                            //     bottomSheetState.bottomSheetState.hide()
-                            // } else {
                             bottomSheetState.bottomSheetState.partialExpand()
-                            // }
                         }
                     }) {
                         Text("Cancel")
@@ -189,24 +189,14 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
         // where the user can trigger the bottom sheet
 
         Row(modifier = Modifier.wrapContentSize()) {
-            Button(onClick = { viewModel.saveNewLocation(state.loc) }, content = {
-                Text("Save This Location!")
+            Button(onClick = {
+                coroutineScope.launch {
+                    bottomSheetState.bottomSheetState.expand()
+                }
+            }, content = {
+                Text("Save This Location")
             })
         }
-    }
-
-    Row(modifier = Modifier.wrapContentSize()) {
-        Button(onClick = {
-            coroutineScope.launch {
-               // if (bottomSheetState.bottomSheetState.isVisible) {
-               //     bottomSheetState.bottomSheetState.hide()
-               // } else {
-                    bottomSheetState.bottomSheetState.expand()
-               // }
-            }
-        }, content = {
-            Text("Save This Location")
-        })
     }
 }
 
