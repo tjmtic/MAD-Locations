@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,12 +39,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.abyxcz.data.entity.LocationEntity
 import com.abyxcz.mad_locations.LocationService
 import com.abyxcz.mad_locations.LocationViewModel
 import com.abyxcz.mad_locations.MainActivity
+import com.abyxcz.mad_locations.geo.CUSTOM_INTENT_GEOFENCE
+import com.abyxcz.mad_locations.geo.GeofenceBroadcastReceiver
+import com.abyxcz.mad_locations.geo.GeofenceManager
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.LocationSource
 import com.google.android.gms.maps.model.CameraPosition
@@ -54,6 +59,8 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.launch
@@ -66,28 +73,60 @@ private const val zoom = 11f
 @Composable
 fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
 
+    val c = LocalContext.current as MainActivity
+    val scope = rememberCoroutineScope()
+
     var isMapLoaded by remember { mutableStateOf(false) }
 
-    val c = LocalContext.current as MainActivity
+    //TODO: REMOVE THIS. DO NOT DO THIS.
+    var isGeoLoaded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(true) {
-        c.initLoc()
+    val geofenceManager = remember { GeofenceManager(c) }
+    var geofenceTransitionEventInfo by remember {
+        mutableStateOf("")
     }
 
     val state by viewModel.state.collectAsState()
 
+    // To control and observe the map camera
     val singapore = LatLng(34.0, -118.0)
     val defaultCameraPosition = CameraPosition.fromLatLngZoom(singapore, 11f)
-
-    // To control and observe the map camera
     val cameraPositionState = rememberCameraPositionState {
         position = defaultCameraPosition
     }
 
+    //Handler for GoogleMaps location data
     val locationSource = remember { MyLocationSource() }
 
     // To show blue dot on map
     val mapProperties by remember { mutableStateOf(MapProperties(isMyLocationEnabled = true)) }
+
+
+    //Initialize Locations and Service
+    LaunchedEffect(true) {
+        c.initLoc()
+
+        /*state.geos.map {
+            geofenceManager.addGeofence(it.key, Location(it.title!!).apply{ latitude = it.latitude
+                                                                                longitude = it.longitude}, it.radius, it.expiration)
+        }
+
+        geofenceManager.registerGeofence()*/
+    }
+
+    // Clean up
+    DisposableEffect(LocalLifecycleOwner.current) {
+        onDispose {
+            scope.launch(Dispatchers.IO) {
+                geofenceManager.deregisterGeofence()
+            }
+        }
+    }
+
+    // Register a local broadcast to receive activity transition updates
+    GeofenceBroadcastReceiver(systemAction = CUSTOM_INTENT_GEOFENCE) { event ->
+        geofenceTransitionEventInfo = event
+    }
 
     // Update blue dot and camera when the location changes
     LaunchedEffect(state) {
@@ -98,6 +137,17 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
         val cameraPosition = CameraPosition.fromLatLngZoom(LatLng(state.loc.latitude, state.loc.longitude), zoom)
 
         //cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition), 1_000)
+
+        if(state.geos.isNotEmpty() && !isGeoLoaded){
+            state.geos.map {
+                geofenceManager.addGeofence(it.key, Location(it.title!!).apply{ latitude = it.latitude
+                    longitude = it.longitude}, it.radius, it.expiration)
+            }
+
+            geofenceManager.registerGeofence()
+
+            isGeoLoaded = true
+        }
     }
 
     // Detect when the map starts moving and print the reason
@@ -164,7 +214,7 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
 
 
 
-        BottomSheetScaffold(
+    BottomSheetScaffold(
             sheetContent = {
                 Column(
                     modifier = Modifier.padding(16.dp)
