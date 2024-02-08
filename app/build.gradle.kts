@@ -70,14 +70,15 @@ dependencies {
 
     implementation(project(":data"))
 
-    implementation("androidx.core:core-ktx:1.9.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation(platform("androidx.compose:compose-bom:2023.03.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.runtime:runtime-livedata")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -87,7 +88,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     // Location Services
-    implementation("com.google.android.gms:play-services-location:20.0.0")
+    implementation("com.google.android.gms:play-services-location:21.1.0")
 
     //Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
@@ -110,6 +111,11 @@ dependencies {
 
     //Datetime
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
+
+    //Work
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+   // implementation(platform("androidx.compose:compose-bom:2024.01.00"))
+    //implementation("androidx.compose.runtime:runtime-livedata")
 }
 
 
