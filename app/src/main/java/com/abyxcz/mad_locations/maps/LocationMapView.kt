@@ -1,9 +1,13 @@
 package com.abyxcz.mad_locations.maps
 
+import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.location.Location
 import android.util.Log
+import android.widget.TextView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.fadeOut
@@ -16,12 +20,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -32,6 +40,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,21 +51,33 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.abyxcz.data.entity.LocationEntity
 import com.abyxcz.mad_locations.LocationService
 import com.abyxcz.mad_locations.LocationViewModel
 import com.abyxcz.mad_locations.MainActivity
+import com.abyxcz.mad_locations.R
+import com.abyxcz.mad_locations.geo.BgLocationWorker
 import com.abyxcz.mad_locations.geo.CUSTOM_INTENT_GEOFENCE
 import com.abyxcz.mad_locations.geo.GeofenceBroadcastReceiver
 import com.abyxcz.mad_locations.geo.GeofenceManager
+import com.bumptech.glide.Glide
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.LocationSource
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
+import com.google.maps.android.compose.AdvancedMarker
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerComposable
+import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.Dispatchers
@@ -64,6 +85,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 
 
 private const val TAG = "TAG-LOCATIONMAPVIEW"
@@ -74,6 +97,12 @@ private const val zoom = 11f
 fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
 
     val c = LocalContext.current as MainActivity
+
+    val workManager = WorkManager.getInstance(c)
+    // Observe the worker state to show enable/disable UI
+    //val workerState by workManager.getWorkInfosForUniqueWorkLiveData(BgLocationWorker.workName)
+     //   .observeAsState()
+
     val scope = rememberCoroutineScope()
 
     var isMapLoaded by remember { mutableStateOf(false) }
@@ -106,19 +135,26 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
     LaunchedEffect(true) {
         c.initLoc()
 
-        /*state.geos.map {
-            geofenceManager.addGeofence(it.key, Location(it.title!!).apply{ latitude = it.latitude
-                                                                                longitude = it.longitude}, it.radius, it.expiration)
-        }
-
-        geofenceManager.registerGeofence()*/
+        Log.d("TIME123", "SCHEDULING WORK!")
+        // Schedule a periodic worker to check for location every 15 min
+        workManager.enqueueUniquePeriodicWork(
+            BgLocationWorker.workName,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            PeriodicWorkRequestBuilder<BgLocationWorker>(
+                15,
+                TimeUnit.MINUTES,
+            ).build()
+        )
     }
 
     // Clean up
     DisposableEffect(LocalLifecycleOwner.current) {
         onDispose {
             scope.launch(Dispatchers.IO) {
+                //Remove geofence watchers
                 geofenceManager.deregisterGeofence()
+
+                //workManager.cancelUniqueWork(BgLocationWorker.workName)
             }
         }
     }
@@ -130,10 +166,10 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
 
     // Update blue dot and camera when the location changes
     LaunchedEffect(state) {
-        Log.d(TAG, "Updating blue dot on map...")
+       // Log.d(TAG, "Updating blue dot on map...")
         locationSource.onLocationChanged(state.loc)
 
-        Log.d(TAG, "Updating camera position...${state.loc}")
+      //  Log.d(TAG, "Updating camera position...${state.loc}")
         val cameraPosition = CameraPosition.fromLatLngZoom(LatLng(state.loc.latitude, state.loc.longitude), zoom)
 
         //cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition), 1_000)
@@ -157,6 +193,16 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
         }
     }
 
+    // Drawing on the map is accomplished with a child-based API
+    val markerClick: (Marker) -> Boolean = {
+        Log.d(TAG, "${it.title} was clicked")
+        cameraPositionState.projection?.let { projection ->
+            Log.d(TAG, "The current projection is: $projection")
+        }
+        false
+    }
+
+
     Box(Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.matchParentSize(),
@@ -170,12 +216,50 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
             locationSource = locationSource,
             properties = mapProperties
         ){
-            state.locs.forEach {
-                Marker(
+            state.locs.forEach { loc ->
+               /* Marker(
                 state = rememberMarkerState(position = LatLng(it.latitude, it.longitude)),
                 title = it.title,
                 snippet = "${it.description} - Marked at ${it.provider}",
-            ) }
+            )*/
+                val iconState = remember { mutableStateOf<BitmapDescriptor?>(null) }
+
+                LaunchedEffect(key1 = Unit, block = {
+                    iconState.value = loadBitmapDescriptorFromUrl(
+                        c,
+                        "https://source.unsplash.com/random/128x128/?arches%20national%20park"
+                    )
+                })
+
+                iconState.value?.let {
+                    Marker(state = rememberMarkerState(position = LatLng(loc.latitude, loc.longitude)), icon = it)
+                }
+
+                /*MarkerComposable(
+                    state = MarkerState(position = LatLng(it.latitude, it.longitude)),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = "Philippines",
+                        tint = androidx.compose.ui.graphics.Color.Blue,
+                        modifier = Modifier.size(64.dp)
+                    )
+                }*/
+
+                /*val textView = TextView(c)
+                textView.text = "Hello!!"
+                textView.setBackgroundColor(Color.BLACK)
+                textView.setTextColor(Color.YELLOW)
+
+                AdvancedMarker(
+                    state = rememberMarkerState(position = LatLng(it.latitude, it.longitude)),
+                    onClick = markerClick,
+                    collisionBehavior = 1,
+                    iconView = textView,
+                    title="Marker 4"
+                )*/
+
+            }
 
             state.geos.forEach{
                 Circle(
@@ -310,6 +394,21 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
 
 
 
+}
+
+suspend fun loadBitmapDescriptorFromUrl(context: Context, imageUrl: String): BitmapDescriptor {
+    return withContext(Dispatchers.IO) {
+        Glide.with(context)
+            .asBitmap()
+            .load(imageUrl)
+            .circleCrop()
+            .submit()
+            .get()
+    }
+        .let { bitmap ->
+            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, 130, 130, false)
+            BitmapDescriptorFactory.fromBitmap(resizedBitmap)
+        }
 }
 
 /**
