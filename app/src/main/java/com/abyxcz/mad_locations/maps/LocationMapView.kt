@@ -227,7 +227,7 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
                 LaunchedEffect(key1 = Unit, block = {
                     iconState.value = loadBitmapDescriptorFromUrl(
                         c,
-                        "https://source.unsplash.com/random/128x128/?arches%20national%20park"
+                        loc.image ?: "https://source.unsplash.com/random/128x128/?arches%20national%20park"
                     )
                 })
 
@@ -400,6 +400,7 @@ suspend fun loadBitmapDescriptorFromUrl(context: Context, imageUrl: String): Bit
     return withContext(Dispatchers.IO) {
         Glide.with(context)
             .asBitmap()
+            //.load(new File(imageUrl))    //load local file uri
             .load(imageUrl)
             .circleCrop()
             .submit()
