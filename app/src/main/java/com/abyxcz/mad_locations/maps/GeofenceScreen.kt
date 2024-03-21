@@ -85,7 +85,7 @@ fun GeofenceScreen() {
 }
 
 @Composable
-private fun GeofencingControls() {
+fun GeofencingControls() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val geofenceManager = remember { GeofenceManager(context) }
@@ -162,8 +162,8 @@ fun GeofenceList(geofenceManager: GeofenceManager) {
                     geofenceManager.addGeofence(
                         "statue_of_liberty",
                         location = Location("").apply {
-                            latitude = 40.689403968838015
-                            longitude = -74.04453795094359
+                            latitude = 34.0
+                            longitude = 118.0
                         },
                     )
                 } else {

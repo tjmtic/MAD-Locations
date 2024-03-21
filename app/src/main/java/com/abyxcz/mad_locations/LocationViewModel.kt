@@ -102,6 +102,17 @@ class LocationViewModel @Inject constructor(
         /* TODO */
     }
 
+    fun saveNewPlace(isGeofence: Boolean, location: Location?, title: String, description: String?) {
+
+        if(isGeofence) {
+            saveNewGeofence(location, 100.0f, 1000 * 30 * 60, title)
+        }
+
+        else {
+            saveNewLocation(location, title, description)
+        }
+
+    }
     fun saveNewLocation(location: Location?, title: String, description: String?){
 
         location?.let {
