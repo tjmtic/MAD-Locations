@@ -14,7 +14,7 @@ import net.sqlcipher.database.SupportFactory
 
 @Database(
     entities = [LocationEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class, ListTypeConverter::class)
@@ -34,6 +34,7 @@ abstract class LocationDB : RoomDatabase() {
                     path,
                 )
                     .openHelperFactory(supportFactory)
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance
