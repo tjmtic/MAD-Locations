@@ -2,7 +2,9 @@ package com.abyxcz.data.di
 
 import android.app.Application
 import androidx.room.Room
+import com.abyxcz.data.dataSource.GeofenceDataSource
 import com.abyxcz.data.dataSource.LocationDataSource
+import com.abyxcz.data.db.GeofenceDao
 import com.abyxcz.data.db.LocationDB
 import com.abyxcz.data.db.LocationDao
 import dagger.Module
@@ -23,5 +25,11 @@ object DataSourceModule {
 
     @Provides
     fun providesLocationDataSource(locationDao: LocationDao) : LocationDataSource = LocationDataSource(locationDao)
+
+    @Provides
+    fun provideGeofenceDao(locationDB: LocationDB) : GeofenceDao = locationDB.GeofenceDao()
+
+    @Provides
+    fun providesGeofenceDataSource(geofenceDao: GeofenceDao) : GeofenceDataSource = GeofenceDataSource(geofenceDao)
 
 }
