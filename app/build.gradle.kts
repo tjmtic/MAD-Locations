@@ -14,7 +14,7 @@ if (localPropertiesFile.exists()) {
         localProperties.load(it)
     }
 }
-val GOOGLE_MAPS_API_KEY : String = localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
+val GOOGLE_MAPS_API_KEY : String = System.getenv("KEYSTORE_PATH") ?: localProperties.getProperty("GOOGLE_MAPS_API_KEY")
 
 android {
     namespace = "com.abyxcz.mad_locations"
