@@ -23,7 +23,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Date
 import javax.inject.Inject
+import kotlinx.datetime.Clock
+import kotlinx.datetime.toJavaInstant
 
 @HiltViewModel
 class LocationViewModel @Inject constructor(
@@ -83,20 +86,26 @@ class LocationViewModel @Inject constructor(
         /* TODO */
     }
 
-    fun saveNewLocation(location: Location?, title: String){
+    fun saveNewLocation(location: Location?, title: String, description: String?){
 
         location?.let {
             Log.d(TAG, "SAVEING NEW LOCAITON: ${location}")
+
+            //TODO: Change Datetime implementation with respect to DB
+            val dateNow = Clock.System.now().toJavaInstant()
+
             viewModelScope.launch {
                 val locationEntity = LocationEntity(
                     provider = "Manual",
                     id = "", //TODO convert to UUID implementations
+                    createdAt = Date.from(dateNow).time,
+                    updatedAt = Date.from(dateNow).time,
                     latitude = location.latitude,
                     longitude = location.longitude,
-                    locationId = null,
+                    locationId = null, //Different from a UUID?
                     title = title,
                     geolocationId = null,
-                    description = null,
+                    description = description,
                     image = null
                 )
                 locDataSource.saveLocation(locationEntity)
@@ -105,14 +114,14 @@ class LocationViewModel @Inject constructor(
     }
 
     fun saveNewLocation(location: Location?){
-        saveNewLocation(location, "")
+        saveNewLocation(location, "", null)
     }
 
     private fun newLocation(): Location {
         val location = Location("NewLocationProvider")
         location.apply {
-            //latitude = singapore.latitude + Random.nextFloat()
-            //longitude = singapore.longitude + Random.nextFloat()
+            latitude = 33.0
+            longitude = -120.0
         }
         return location
     }

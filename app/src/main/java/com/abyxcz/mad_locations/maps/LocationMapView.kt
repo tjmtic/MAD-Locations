@@ -56,14 +56,11 @@ import kotlinx.coroutines.launch
 
 
 private const val TAG = "TAG-LOCATIONMAPVIEW"
-private const val zoom = 16f
+private const val zoom = 11f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
-
-    val singapore = LatLng(1.3588227, 103.8742114)
-    val defaultCameraPosition = CameraPosition.fromLatLngZoom(singapore, 11f)
 
     var isMapLoaded by remember { mutableStateOf(false) }
 
@@ -74,6 +71,9 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
     }
 
     val state by viewModel.state.collectAsState()
+
+    val singapore = LatLng(1.0, 1.0)
+    val defaultCameraPosition = CameraPosition.fromLatLngZoom(singapore, 11f)
 
     // To control and observe the map camera
     val cameraPositionState = rememberCameraPositionState {
@@ -90,9 +90,10 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
         Log.d(TAG, "Updating blue dot on map...")
         locationSource.onLocationChanged(state.loc)
 
-        Log.d(TAG, "Updating camera position...")
+        Log.d(TAG, "Updating camera position...${state.loc}")
         val cameraPosition = CameraPosition.fromLatLngZoom(LatLng(state.loc.latitude, state.loc.longitude), zoom)
-        //cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition), 1_000)
+
+        cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition), 1_000)
     }
 
     // Detect when the map starts moving and print the reason
@@ -118,7 +119,8 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
             state.locs.forEach {
                 Marker(
                 state = rememberMarkerState(position = LatLng(it.latitude, it.longitude)),
-                title = "Marker at ${it.provider}",
+                title = it.title,
+                snippet = "${it.description} - Marked at ${it.provider}",
             ) }
         }
 
@@ -141,6 +143,7 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
 
 
     var textState by remember { mutableStateOf("")}
+    var descriptionState by remember { mutableStateOf("")}
 
     val bottomSheetState = rememberBottomSheetScaffoldState()
     val coroutineScope = rememberCoroutineScope()
@@ -158,20 +161,42 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
                     label = { Text("Enter Title") }
                 )
 
-                //DESCRIPTION
+                TextField(
+                    value = descriptionState,
+                    onValueChange = { newText -> descriptionState = newText },
+                    label = { Text("Enter Description") }
+                )
 
-                //Attach Closest GEOLOCATION
+                //Attach Closest GEOLOCATION?
 
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Button(onClick = { viewModel.saveNewLocation(state.loc, textState) }) {
+                    Button(onClick = {
+                        //Save DATA
+                        viewModel.saveNewLocation(state.loc, textState, descriptionState)
+
+                        //Reset FORM
+                        textState = ""
+                        descriptionState = ""
+
+                        //Reset UI
+                        coroutineScope.launch {
+                            bottomSheetState.bottomSheetState.partialExpand()
+                        }
+
+                    }) {
                         Text("Submit")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(onClick = {
+                        //Reset FORM
+                        textState = ""
+                        descriptionState = ""
+
+                        //Reset UI
                         coroutineScope.launch {
                             bottomSheetState.bottomSheetState.partialExpand()
                         }
