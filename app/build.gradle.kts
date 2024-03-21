@@ -112,14 +112,15 @@ dependencies {
     //Datetime
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
 
-    //Work
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
-   // implementation(platform("androidx.compose:compose-bom:2024.01.00"))
-    //implementation("androidx.compose.runtime:runtime-livedata")
-
-
     //Glide
     implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
+    
+    //Worker
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+    //Navigation
+    implementation("androidx.navigation:navigation-compose:2.7.6")
+
 }
 
 
