@@ -8,9 +8,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import com.abyxcz.data.dataSource.GeofenceDataSource
 import com.abyxcz.data.dataSource.LocationDataSource
 import com.abyxcz.data.dataSource.Result
 import com.abyxcz.data.db.LocationDao
+import com.abyxcz.data.entity.GeofenceEntity
 import com.abyxcz.data.entity.LocationEntity
 import com.google.android.gms.location.FusedLocationProviderClient
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,8 +32,9 @@ import kotlinx.datetime.toJavaInstant
 
 @HiltViewModel
 class LocationViewModel @Inject constructor(
-    private val locDataSource: LocationDataSource,
     locationClient: DefaultLocationClient,
+    var geoDataSource: GeofenceDataSource,
+    var locDataSource: LocationDataSource
     ): ViewModel() {
 
     companion object {
@@ -58,8 +61,21 @@ class LocationViewModel @Inject constructor(
         initialValue = emptyList(),
         )
 
-    val state: StateFlow<LocationViewModelState> = combine(loc, locs){loc, locs ->
-        LocationViewModelState(loc, locs)
+    private var geos: Flow<List<GeofenceEntity>> = geoDataSource.observeGeofences().map{
+        when(it) {
+            is Result.Success -> {it.data}
+            else -> {
+                emptyList<GeofenceEntity>()
+            }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = emptyList(),
+    )
+
+    val state: StateFlow<LocationViewModelState> = combine(loc, locs, geos){loc, locs, geos ->
+        LocationViewModelState(loc, locs, geos)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -117,6 +133,34 @@ class LocationViewModel @Inject constructor(
         saveNewLocation(location, "", null)
     }
 
+    fun saveNewGeofence(location: Location?, radius: Float, expiration: Long, key: String){
+
+        location?.let {
+            viewModelScope.launch {
+
+                //TODO: Change Datetime implementation with respect to DB
+                val dateNow = Clock.System.now().toJavaInstant()
+
+                val geofenceEntity = GeofenceEntity(
+                    provider = "Manual",
+                    id = "", //TODO convert to UUID implementations
+                    createdAt = Date.from(dateNow).time,
+                    updatedAt = Date.from(dateNow).time,
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    geofenceId = null, //Different from a UUID?
+                    title = "title",
+                    description = "description",
+                    image = null,
+                    radius = radius,
+                    expiration = expiration,
+                    key = key
+                )
+                geoDataSource.saveGeofence(geofenceEntity)
+            }
+        }
+    }
+
     private fun newLocation(): Location {
         val location = Location("NewLocationProvider")
         location.apply {
@@ -129,4 +173,5 @@ class LocationViewModel @Inject constructor(
 data class LocationViewModelState(
     var loc: Location = Location("NewLocationProvider"),
     var locs: List<LocationEntity> = emptyList(),
+    var geos: List<GeofenceEntity> = emptyList(),
 )
