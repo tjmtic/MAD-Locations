@@ -17,5 +17,14 @@ data class LocationEntity(
     @SerializedName("lat")
     val latitude: Double,
     @SerializedName("lon")
-    val longitude: Double
+    val longitude: Double,
+    @SerializedName("geolocationId")
+    val geolocationId: String?,
+    @SerializedName("title")
+    val title: String,
+    @SerializedName("description")
+    val description: String?,
+    @SerializedName("image")
+    val image: String?
+
 )
