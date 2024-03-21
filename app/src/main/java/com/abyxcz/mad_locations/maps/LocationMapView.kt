@@ -7,23 +7,35 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.abyxcz.data.entity.LocationEntity
 import com.abyxcz.mad_locations.LocationService
@@ -40,11 +52,13 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.forEach
+import kotlinx.coroutines.launch
 
 
 private const val TAG = "TAG-LOCATIONMAPVIEW"
 private const val zoom = 16f
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
 
@@ -125,9 +139,73 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
         }
     }
 
+
+    var textState by remember { mutableStateOf("")}
+
+    val bottomSheetState = rememberBottomSheetScaffoldState()
+    val coroutineScope = rememberCoroutineScope()
+
+
+    BottomSheetScaffold(
+        sheetContent = {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // Form fields
+                TextField(
+                    value = textState,
+                    onValueChange = { newText -> textState = newText },
+                    label = { Text("Enter text") }
+                )
+
+                // Action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(onClick = { /* Handle form submission */ }) {
+                        Text("Submit")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(onClick = {
+                        coroutineScope.launch {
+                            // if (bottomSheetState.bottomSheetState.isVisible) {
+                            //     bottomSheetState.bottomSheetState.hide()
+                            // } else {
+                            bottomSheetState.bottomSheetState.partialExpand()
+                            // }
+                        }
+                    }) {
+                        Text("Cancel")
+                    }
+                }
+            }
+        },
+        scaffoldState = bottomSheetState,
+
+    ) {
+        // Content of the main screen
+        // This could be a Scaffold, Column, or any other Composable
+        // where the user can trigger the bottom sheet
+
+        Row(modifier = Modifier.wrapContentSize()) {
+            Button(onClick = { viewModel.saveNewLocation(state.loc) }, content = {
+                Text("Save This Location!")
+            })
+        }
+    }
+
     Row(modifier = Modifier.wrapContentSize()) {
-        Button(onClick = { viewModel.saveNewLocation(state.loc) }, content = {
-            Text("Save This Location!")
+        Button(onClick = {
+            coroutineScope.launch {
+               // if (bottomSheetState.bottomSheetState.isVisible) {
+               //     bottomSheetState.bottomSheetState.hide()
+               // } else {
+                    bottomSheetState.bottomSheetState.expand()
+               // }
+            }
+        }, content = {
+            Text("Save This Location")
         })
     }
 }
