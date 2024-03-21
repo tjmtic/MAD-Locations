@@ -3,6 +3,8 @@ package com.abyxcz.data.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
+import kotlinx.datetime.Instant
+import java.sql.Date
 
 @Entity(tableName = "locations")
 data class LocationEntity(
@@ -12,6 +14,10 @@ data class LocationEntity(
     val id: String,
     @SerializedName("id")
     val locationId: String?,
+    @SerializedName("createdAt")
+    val createdAt: Long,
+    @SerializedName("updatedAt")
+    val updatedAt: Long,
     @SerializedName("provider")
     val provider: String,
     @SerializedName("lat")
