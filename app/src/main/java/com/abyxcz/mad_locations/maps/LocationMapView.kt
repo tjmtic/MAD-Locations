@@ -1,6 +1,7 @@
 package com.abyxcz.mad_locations.maps
 
 import android.content.Intent
+import android.graphics.Color
 import android.location.Location
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -45,6 +46,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.LocationSource
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.Marker
@@ -72,7 +74,7 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
 
     val state by viewModel.state.collectAsState()
 
-    val singapore = LatLng(1.0, 1.0)
+    val singapore = LatLng(34.0, -118.0)
     val defaultCameraPosition = CameraPosition.fromLatLngZoom(singapore, 11f)
 
     // To control and observe the map camera
@@ -93,7 +95,7 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
         Log.d(TAG, "Updating camera position...${state.loc}")
         val cameraPosition = CameraPosition.fromLatLngZoom(LatLng(state.loc.latitude, state.loc.longitude), zoom)
 
-        cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition), 1_000)
+        //cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition), 1_000)
     }
 
     // Detect when the map starts moving and print the reason
@@ -122,6 +124,15 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
                 title = it.title,
                 snippet = "${it.description} - Marked at ${it.provider}",
             ) }
+
+            state.geos.forEach{
+                Circle(
+                    center = LatLng(it.latitude, it.longitude),
+                    radius = it.radius.toDouble(),
+                    strokeColor = androidx.compose.ui.graphics.Color.Blue,
+                    fillColor = androidx.compose.ui.graphics.Color.Cyan.copy(alpha = .2f),
+                )
+            }
         }
 
         if (!isMapLoaded) {
@@ -216,10 +227,13 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
         Row(modifier = Modifier.wrapContentSize()) {
             Button(onClick = {
                 coroutineScope.launch {
+                    //viewModel.saveNewGeofence(state.loc, 100000f, 30 * 60 * 1000, "Test 5")
                     bottomSheetState.bottomSheetState.expand()
                 }
             }, content = {
                 Text("Save This Location")
+
+                //GeofencingControls()
             })
         }
     }
