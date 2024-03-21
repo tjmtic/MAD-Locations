@@ -85,7 +85,7 @@ class LocationViewModel @Inject constructor(
     init {
         viewModelScope.launch{
             loc.collect{
-                println("New Location: $it")
+                println("loc: $it")
             }
         }
     }
@@ -102,18 +102,18 @@ class LocationViewModel @Inject constructor(
         /* TODO */
     }
 
-    fun saveNewPlace(isGeofence: Boolean, location: Location?, title: String, description: String?) {
+    fun saveNewPlace(isGeofence: Boolean, location: Location?, title: String, description: String?, imageUri: String?) {
 
         if(isGeofence) {
             saveNewGeofence(location, 100.0f, 1000 * 30 * 60, title)
         }
 
         else {
-            saveNewLocation(location, title, description)
+            saveNewLocation(location, title, description, imageUri)
         }
 
     }
-    fun saveNewLocation(location: Location?, title: String, description: String?){
+    fun saveNewLocation(location: Location?, title: String, description: String?, imageUri: String?){
 
         location?.let {
             Log.d(TAG, "SAVEING NEW LOCAITON: ${location}")
@@ -133,7 +133,7 @@ class LocationViewModel @Inject constructor(
                     title = title,
                     geolocationId = null,
                     description = description,
-                    image = null
+                    image = imageUri
                 )
                 locDataSource.saveLocation(locationEntity)
             }
@@ -141,7 +141,7 @@ class LocationViewModel @Inject constructor(
     }
 
     fun saveNewLocation(location: Location?){
-        saveNewLocation(location, "", null)
+        saveNewLocation(location, "", null, null)
     }
 
     fun saveNewGeofence(location: Location?, radius: Float, expiration: Long, key: String){
