@@ -108,6 +108,9 @@ dependencies {
     //Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
+    //Datetime
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
+
     //Worker
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
