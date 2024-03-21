@@ -7,19 +7,21 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.abyxcz.data.entity.Converters
+import com.abyxcz.data.entity.GeofenceEntity
 import com.abyxcz.data.entity.ListTypeConverter
 import net.sqlcipher.database.SQLiteDatabase
 import net.sqlcipher.database.SupportFactory
 
 
 @Database(
-    entities = [LocationEntity::class],
-    version = 3,
+    entities = [LocationEntity::class, GeofenceEntity::class],
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class, ListTypeConverter::class)
 abstract class LocationDB : RoomDatabase() {
     abstract fun LocationDao(): LocationDao
+    abstract fun GeofenceDao(): GeofenceDao
 
     companion object {
         @Volatile
