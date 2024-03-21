@@ -1,16 +1,27 @@
 package com.abyxcz.mad_locations.maps
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.location.Location
+import android.net.Uri
+import android.os.Environment
 import android.util.Log
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +52,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,15 +62,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import coil.annotation.ExperimentalCoilApi
+import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
 import com.abyxcz.data.entity.LocationEntity
 import com.abyxcz.mad_locations.LocationService
 import com.abyxcz.mad_locations.LocationViewModel
 import com.abyxcz.mad_locations.MainActivity
 import com.abyxcz.mad_locations.R
+import com.abyxcz.mad_locations.components.CameraScanPreview
 import com.abyxcz.mad_locations.geo.BgLocationWorker
 import com.abyxcz.mad_locations.geo.CUSTOM_INTENT_GEOFENCE
 import com.abyxcz.mad_locations.geo.GeofenceBroadcastReceiver
@@ -86,11 +104,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Objects
 import java.util.concurrent.TimeUnit
 
 
 private const val TAG = "TAG-LOCATIONMAPVIEW"
 private const val zoom = 11f
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -286,15 +309,61 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
                 )
             }
         }
+
+     //   CameraScanPreview(onHideCamera = {})
     }
 
+
+    /////INPUT FORM
+    ///////////////
 
     var switchState by remember { mutableStateOf(false) }
     var textState by remember { mutableStateOf("")}
     var descriptionState by remember { mutableStateOf("")}
+    var radiusState by remember { mutableFloatStateOf(100.0f)}
 
     val bottomSheetState = rememberBottomSheetScaffoldState()
     val coroutineScope = rememberCoroutineScope()
+
+    val context = LocalContext.current
+    val file = remember { context.createImageFile() }
+    val uri = FileProvider.getUriForFile(
+        Objects.requireNonNull(context),
+        /*BuildConfig.APPLICATION_ID +*/ "test.provider", file
+    )
+
+    //OnSave Date Fields
+    var capturedImageUri by remember {
+        mutableStateOf<Uri>(Uri.EMPTY)
+    }
+
+    var capturedLocation by remember {
+        mutableStateOf<Location?>(null)
+    }
+
+    var cameraLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) {
+            if(it){
+                capturedImageUri = uri
+                capturedLocation = state.loc
+            } else println("No Image Captured.")
+
+            //save location fields
+
+        }
+
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        if (it) {
+            Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
+            cameraLauncher.launch(uri)
+        } else {
+            Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 
 
 
@@ -316,18 +385,58 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
                         Text("Enable Feature")
                     }
 
-                    // Form fields
-                    TextField(
-                        value = textState,
-                        onValueChange = { newText -> textState = newText },
-                        label = { Text("Enter Title") }
-                    )
+                    when(switchState) {
+                        // Form fields
+                        true -> {
+                            TextField(
+                                value = textState,
+                                onValueChange = { newText -> textState = newText },
+                                label = { Text("Enter Place Title") }
+                            )
 
-                    TextField(
-                        value = descriptionState,
-                        onValueChange = { newText -> descriptionState = newText },
-                        label = { Text("Enter Description") }
-                    )
+                            TextField(
+                                value = descriptionState,
+                                onValueChange = { newText -> descriptionState = newText },
+                                label = { Text("Enter Place Description") }
+                            )
+
+
+
+                        }
+                        false -> {
+
+                            TextField(
+                                value = textState,
+                                onValueChange = { newText -> textState = newText },
+                                label = { Text("Enter Location Title") }
+                            )
+
+                            TextField(
+                                value = descriptionState,
+                                onValueChange = { newText -> descriptionState = newText },
+                                label = { Text("Enter Location Description") }
+                            )
+
+                            if (capturedImageUri.path?.isNotEmpty() == true) {
+                                //Text("Image at Uri $uri")
+                                //Text("Image at CapturedUri $capturedImageUri")
+                                Image(
+                                    modifier = Modifier
+                                        .padding(16.dp, 8.dp),
+                                    painter = rememberAsyncImagePainter(capturedImageUri),
+                                    contentDescription = null
+                                )
+
+
+                            }
+
+                            else {
+                                Text("No Image")
+                            }
+
+                        }
+
+                    }
 
                     //Attach Closest GEOLOCATION?
 
@@ -338,7 +447,7 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
                     ) {
                         Button(onClick = {
                             //Save DATA
-                            viewModel.saveNewPlace(switchState, state.loc, textState, descriptionState)
+                            viewModel.saveNewPlace(switchState, capturedLocation, textState, descriptionState, capturedImageUri.toString())
 
                             //Reset FORM
                             textState = ""
@@ -379,21 +488,52 @@ fun LocationMapView(viewModel: LocationViewModel = hiltViewModel()) {
                 Button(onClick = {
                     coroutineScope.launch {
                         //viewModel.saveNewGeofence(state.loc, 100000f, 30 * 60 * 1000, "Test 5")
-                        bottomSheetState.bottomSheetState.expand()
+
+                       // bottomSheetState.bottomSheetState.expand()
+
+                        launchCamera(context, uri, cameraLauncher, permissionLauncher)
+
                     }
                 }, content = {
                     Text("Save This Location")
+                    //SaveImageButton()
+                    //CameraScanPreview(onHideCamera = {})
 
                     //GeofencingControls()
                 })
+               // CameraScanPreview(onHideCamera = {})
             }
         }
 
+//////////////////
 
 
 
 
+}
 
+fun launchCamera(context: Context, uri: Uri, cameraLauncher: ManagedActivityResultLauncher<Uri, Boolean>, permissionLauncher: ManagedActivityResultLauncher<String, Boolean>){
+    val permissionCheckResult =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+    if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+        println("Launching Camera for $uri")
+        cameraLauncher.launch(uri)
+    } else {
+        // Request a permission
+        permissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+}
+
+fun Context.createImageFile(): File {
+    // Create an image file name
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+    val imageFileName = "JPEG_" + timeStamp + "_"
+    val image = File.createTempFile(
+        imageFileName, /* prefix */
+        ".jpg", /* suffix */
+        externalCacheDir      /* directory */
+    )
+    return image
 }
 
 suspend fun loadBitmapDescriptorFromUrl(context: Context, imageUrl: String): BitmapDescriptor {

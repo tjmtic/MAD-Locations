@@ -66,6 +66,10 @@ android {
 }
 
 
+// CameraX core library
+val camerax_version = "1.4.0-alpha04"
+
+
 dependencies {
 
     implementation(project(":data"))
@@ -120,6 +124,20 @@ dependencies {
 
     //Glide
     implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
+    //Coil
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
+    //CameraX
+    implementation("androidx.camera:camera-core:$camerax_version")
+
+// CameraX Camera2 implementation
+    implementation("androidx.camera:camera-camera2:$camerax_version")
+
+// CameraX lifecycle library
+    implementation("androidx.camera:camera-lifecycle:$camerax_version")
+
+// CameraX view implementation
+    implementation("androidx.camera:camera-view:$camerax_version")
 }
 
 
